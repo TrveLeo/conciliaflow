@@ -1,0 +1,34 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: conciliaflow
+      POSTGRES_PASSWORD: conciliaflow
+      POSTGRES_DB: conciliaflow
+    # 5433 no host para não brigar com um Postgres local na 5432.
+    ports:
+      - "5433:5432"
+    volumes:
+      - conciliaflow_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U conciliaflow"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+psycopg2://conciliaflow:conciliaflow@db:5432/conciliaflow
+      UPLOAD_DIR: /data/uploads
+    ports:
+      - "8000:8000"
+    volumes:
+      - conciliaflow_uploads:/data/uploads
+
+volumes:
+  conciliaflow_pgdata:
+  conciliaflow_uploads:
