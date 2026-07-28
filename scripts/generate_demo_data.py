@@ -156,7 +156,23 @@ def main() -> None:
 | Crédito sem venda (só em B) | {N_ONLY_IN_B} | pendente |
 | Linha com data ou valor ilegível | {N_BROKEN_ROWS} | importada com `parse_error` |
 
-Conciliação exata esperada: **{TOTAL - N_CENTS_DIFF - N_DATE_SHIFT - N_ONLY_IN_A - N_BROKEN_ROWS}** pares.
+## Resultado esperado da conciliação
+
+Com os parâmetros padrão (janela de 3 dias, tolerância de 5 centavos):
+
+| Resultado | Qtd |
+|---|---|
+| Conciliado (regra `exata`) | {TOTAL - N_CENTS_DIFF - N_DATE_SHIFT - N_ONLY_IN_A - N_BROKEN_ROWS} |
+| Divergente (regra `janela_data`) | {N_DATE_SHIFT} |
+| Divergente (regra `tolerancia_valor`) | {N_CENTS_DIFF} |
+| Pendente na fonte A | {N_ONLY_IN_A + N_BROKEN_ROWS} |
+| Pendente na fonte B | {N_ONLY_IN_B + N_BROKEN_ROWS} |
+
+Linha ilegível não é conciliada de propósito: casá-la por referência esconderia
+o problema de qualidade do dado. Ela fica pendente — e deixa o crédito
+correspondente órfão do outro lado — até a planilha ser corrigida e reenviada.
+
+Esses números são verificados em `tests/test_matching.py`.
 
 ## Diferenças de formato entre as fontes
 

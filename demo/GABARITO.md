@@ -16,7 +16,23 @@
 | Crédito sem venda (só em B) | 4 | pendente |
 | Linha com data ou valor ilegível | 3 | importada com `parse_error` |
 
-Conciliação exata esperada: **98** pares.
+## Resultado esperado da conciliação
+
+Com os parâmetros padrão (janela de 3 dias, tolerância de 5 centavos):
+
+| Resultado | Qtd |
+|---|---|
+| Conciliado (regra `exata`) | 98 |
+| Divergente (regra `janela_data`) | 8 |
+| Divergente (regra `tolerancia_valor`) | 6 |
+| Pendente na fonte A | 8 |
+| Pendente na fonte B | 7 |
+
+Linha ilegível não é conciliada de propósito: casá-la por referência esconderia
+o problema de qualidade do dado. Ela fica pendente — e deixa o crédito
+correspondente órfão do outro lado — até a planilha ser corrigida e reenviada.
+
+Esses números são verificados em `tests/test_matching.py`.
 
 ## Diferenças de formato entre as fontes
 

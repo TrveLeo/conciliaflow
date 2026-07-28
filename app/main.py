@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from app.database import Base, engine
-from app.routers import jobs
+from app.routers import jobs, reconciliation
 
 
 @asynccontextmanager
@@ -17,7 +17,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
 app = FastAPI(
     title="ConciliaFlow",
-    version="0.1.0",
+    version="0.2.0",
     description=(
         "Conciliação de planilhas de pagamento entre fontes diferentes: "
         "upload, normalização, matching e relatório de divergências."
@@ -26,6 +26,7 @@ app = FastAPI(
 )
 
 app.include_router(jobs.router)
+app.include_router(reconciliation.router)
 
 
 @app.get("/health", tags=["infra"])
