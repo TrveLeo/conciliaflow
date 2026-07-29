@@ -42,6 +42,7 @@ const brl = (valor) =>
     : Number(valor).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
 const dia = (iso) => (iso ? iso.split("-").reverse().join("/") : "—");
+const textoOuTraco = (valor) => (valor === null || valor === undefined || valor === "" ? "—" : String(valor));
 
 function celula(texto, classe) {
   const td = document.createElement("td");
@@ -322,12 +323,7 @@ async function carregarMatches() {
       const revisar = document.createElement("button");
       revisar.className = "secundario";
       revisar.textContent = "Revisar";
-      revisar.onclick = () => {
-        avisar(
-          `Demo: revisar ${descricaoCurta(match.record_a)} x ${descricaoCurta(match.record_b)}. ` +
-          "Ação visual apenas, sem persistência."
-        );
-      };
+      revisar.onclick = () => abrirInspecao(match);
       acao.appendChild(revisar);
     } else {
       acao.textContent = "—";
@@ -387,8 +383,89 @@ function celulaRegistro(registro, rotulo) {
   return td;
 }
 
+function abrirInspecao(match) {
+  $("#inspecao-overlay").hidden = false;
+  $("#painel-inspecao").hidden = false;
+  $("#inspecao-status").className = `etiqueta ${match.status}`;
+  $("#inspecao-status").textContent = match.status;
+  $("#inspecao-regra").textContent = match.rule === "nenhuma" ? "sem regra" : match.rule;
+  $("#inspecao-motivo").textContent = match.mismatch_reason || "Sem motivo registrado para este par.";
+
+  const metricas = $("#inspecao-metricas");
+  metricas.textContent = "";
+  const cards = [
+    ["Diferença de valor", brl(match.amount_difference)],
+    ["Diferença de dias", match.days_difference === null ? "—" : `${match.days_difference} dia(s)`],
+  ];
+  for (const [rotulo, valor] of cards) {
+    const div = document.createElement("div");
+    div.className = "inspecao-metrica";
+    const forte = document.createElement("strong");
+    forte.textContent = valor;
+    const span = document.createElement("span");
+    span.textContent = rotulo;
+    div.append(forte, span);
+    metricas.appendChild(div);
+  }
+
+  preencherBlocoInspecao("#inspecao-venda", match.record_a, "venda");
+  preencherBlocoInspecao("#inspecao-credito", match.record_b, "crédito");
+}
+
+function fecharInspecao() {
+  $("#inspecao-overlay").hidden = true;
+  $("#painel-inspecao").hidden = true;
+}
+
+function preencherBlocoInspecao(seletor, registro, tipo) {
+  const caixa = $(seletor);
+  caixa.textContent = "";
+
+  if (!registro) {
+    const vazio = document.createElement("p");
+    vazio.className = "ajuda";
+    vazio.textContent = `Sem ${tipo} correspondente neste match.`;
+    caixa.appendChild(vazio);
+    return;
+  }
+
+  const lista = document.createElement("dl");
+  lista.className = "lista-campos";
+  const campos = [
+    ["Referência", registro.reference],
+    ["ID externo", registro.external_id],
+    ["Linha importada", registro.row_number],
+    ["Data", dia(registro.occurred_on)],
+    ["Valor", brl(registro.amount)],
+    ["Descrição", registro.description],
+    ["Erro de leitura", registro.parse_error],
+  ];
+
+  for (const [rotulo, valor] of campos) {
+    const grupo = document.createElement("div");
+    grupo.className = "campo-inspecao";
+    const dt = document.createElement("dt");
+    dt.textContent = rotulo;
+    const dd = document.createElement("dd");
+    dd.textContent = textoOuTraco(valor);
+    grupo.append(dt, dd);
+    lista.appendChild(grupo);
+  }
+  caixa.appendChild(lista);
+
+  const payload = document.createElement("pre");
+  payload.className = "payload-bruto";
+  payload.textContent = JSON.stringify(registro.raw_payload, null, 2);
+  caixa.appendChild(payload);
+}
+
 $("#filtro-status").onchange = carregarMatches;
 $("#filtro-regra").onchange = carregarMatches;
+$("#btn-fechar-inspecao").onclick = fecharInspecao;
+$("#inspecao-overlay").onclick = fecharInspecao;
+document.addEventListener("keydown", (evento) => {
+  if (evento.key === "Escape" && !$("#painel-inspecao").hidden) fecharInspecao();
+});
 
 // --- início ----------------------------------------------------------------
 

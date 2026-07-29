@@ -7,20 +7,47 @@
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-  <header>
-    <h1>ConciliaFlow</h1>
-    <p>Conciliação de planilhas de pagamento entre fontes que não conversam.</p>
+  <div class="fundo-orb orb-a"></div>
+  <div class="fundo-orb orb-b"></div>
+
+  <header class="hero">
+    <div class="hero-conteudo">
+      <p class="sobretitulo">Prova de competência · reconciliação financeira</p>
+      <div class="hero-linha">
+        <div>
+          <h1>ConciliaFlow</h1>
+          <p class="hero-texto">Conciliação de planilhas de pagamento entre fontes que não conversam, com foco em fechar lote sem conferência manual linha a linha.</p>
+        </div>
+        <div class="hero-metrica">
+          <strong>77,2%</strong>
+          <span>automático no dataset de demonstração</span>
+        </div>
+      </div>
+    </div>
   </header>
 
-  <main>
+  <main class="layout">
     <!-- Tela 1: execuções -->
     <section id="tela-jobs">
+      <section class="painel destaque">
+        <div>
+          <p class="sobretitulo">Fluxo</p>
+          <h2 class="titulo-painel">Upload de vendas e créditos, matching determinístico e export em CSV.</h2>
+        </div>
+        <div class="chips">
+          <span>CSV/XLSX</span>
+          <span>3 regras</span>
+          <span>Resumo por status</span>
+          <span>Export Excel</span>
+        </div>
+      </section>
+
       <div class="linha-titulo">
         <h2>Execuções</h2>
         <button id="btn-nova">Nova conciliação</button>
       </div>
 
-      <form id="form-job" class="cartao" hidden>
+      <form id="form-job" class="cartao cartao-form" hidden>
         <label>Nome
           <input name="name" required minlength="3" placeholder="Fechamento de junho">
         </label>
@@ -41,20 +68,25 @@
         </div>
       </form>
 
-      <table id="tabela-jobs">
-        <thead>
-          <tr><th>#</th><th>Nome</th><th>Status</th><th>Criada em</th><th></th></tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-      <p class="vazio" id="jobs-vazio" hidden>Nenhuma execução ainda.</p>
+      <section class="painel">
+        <table id="tabela-jobs">
+          <thead>
+            <tr><th>#</th><th>Nome</th><th>Status</th><th>Criada em</th><th></th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <p class="vazio" id="jobs-vazio" hidden>Nenhuma execução ainda. Crie a primeira para subir os dois arquivos de demonstração.</p>
+      </section>
     </section>
 
     <!-- Tela 2: detalhe -->
     <section id="tela-detalhe" hidden>
       <button class="secundario" id="btn-voltar">← Execuções</button>
       <div class="linha-titulo">
-        <h2 id="detalhe-nome"></h2>
+        <div>
+          <p class="sobretitulo">Execução</p>
+          <h2 id="detalhe-nome"></h2>
+        </div>
         <span class="etiqueta" id="detalhe-status"></span>
       </div>
 
@@ -132,6 +164,37 @@
       </div>
     </section>
   </main>
+
+  <div id="inspecao-overlay" class="inspecao-overlay" hidden></div>
+  <aside id="painel-inspecao" class="painel-inspecao" hidden aria-labelledby="inspecao-titulo">
+    <div class="painel-inspecao-topo">
+      <div>
+        <p class="sobretitulo">Revisão visual</p>
+        <h2 id="inspecao-titulo">Detalhe da divergência</h2>
+      </div>
+      <button id="btn-fechar-inspecao" class="secundario" type="button">Fechar</button>
+    </div>
+
+    <div class="inspecao-resumo">
+      <span class="etiqueta" id="inspecao-status"></span>
+      <span class="inspecao-regra" id="inspecao-regra"></span>
+    </div>
+
+    <p class="inspecao-motivo" id="inspecao-motivo"></p>
+
+    <div class="inspecao-metricas" id="inspecao-metricas"></div>
+
+    <div class="inspecao-grade">
+      <section class="bloco-inspecao">
+        <h3>Venda</h3>
+        <div id="inspecao-venda"></div>
+      </section>
+      <section class="bloco-inspecao">
+        <h3>Crédito</h3>
+        <div id="inspecao-credito"></div>
+      </section>
+    </div>
+  </aside>
 
   <div id="aviso" hidden></div>
   <script src="/static/app.js"></script>

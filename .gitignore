@@ -12,3 +12,8 @@ build/
 .ruff_cache/
 *.log
 .DS_Store
+*.db
+.pytest_cache/
+.idea/
+*.swp
+*.swo
