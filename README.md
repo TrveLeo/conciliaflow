@@ -5,7 +5,6 @@ sem conferência manual linha a linha.
 
 ![Resumo da conciliação](resultado-conciliacao.png)
 
-![Demo do fluxo](ConciliaFlow-demo.gif)
 
 ## Problema
 
