@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ConciliaFlow</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header>
+    <h1>ConciliaFlow</h1>
+    <p>Conciliação de planilhas de pagamento entre fontes que não conversam.</p>
+  </header>
+
+  <main>
+    <!-- Tela 1: execuções -->
+    <section id="tela-jobs">
+      <div class="linha-titulo">
+        <h2>Execuções</h2>
+        <button id="btn-nova">Nova conciliação</button>
+      </div>
+
+      <form id="form-job" class="cartao" hidden>
+        <label>Nome
+          <input name="name" required minlength="3" placeholder="Fechamento de junho">
+        </label>
+        <label>Descrição
+          <input name="description" placeholder="opcional">
+        </label>
+        <div class="par">
+          <label>Janela de data (dias)
+            <input name="date_window_days" type="number" value="3" min="0" max="60">
+          </label>
+          <label>Tolerância (centavos)
+            <input name="amount_tolerance_cents" type="number" value="5" min="0" max="10000">
+          </label>
+        </div>
+        <div class="acoes">
+          <button type="submit">Criar</button>
+          <button type="button" class="secundario" id="btn-cancelar">Cancelar</button>
+        </div>
+      </form>
+
+      <table id="tabela-jobs">
+        <thead>
+          <tr><th>#</th><th>Nome</th><th>Status</th><th>Criada em</th><th></th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <p class="vazio" id="jobs-vazio" hidden>Nenhuma execução ainda.</p>
+    </section>
+
+    <!-- Tela 2: detalhe -->
+    <section id="tela-detalhe" hidden>
+      <button class="secundario" id="btn-voltar">← Execuções</button>
+      <div class="linha-titulo">
+        <h2 id="detalhe-nome"></h2>
+        <span class="etiqueta" id="detalhe-status"></span>
+      </div>
+
+      <div class="cartao">
+        <h3>Fontes</h3>
+        <p class="ajuda">
+          A e B são obrigatórias. CSV ou XLSX — o sistema descobre sozinho quais
+          colunas são quais. Reenviar substitui o conteúdo da fonte.
+        </p>
+        <div id="fontes" class="fontes"></div>
+      </div>
+
+      <div class="cartao">
+        <h3>Parâmetros</h3>
+        <form id="form-parametros" class="par">
+          <label>Janela de data (dias)
+            <input name="date_window_days" type="number" min="0" max="60">
+          </label>
+          <label>Tolerância (centavos)
+            <input name="amount_tolerance_cents" type="number" min="0" max="10000">
+          </label>
+          <button type="submit" class="secundario">Salvar</button>
+        </form>
+        <p class="ajuda">
+          Mudar aqui e conciliar de novo é uso normal: o resultado é recalculado
+          do zero.
+        </p>
+      </div>
+
+      <div class="acoes">
+        <button id="btn-conciliar">Conciliar</button>
+        <a id="link-export" class="botao secundario" hidden>Exportar CSV</a>
+      </div>
+
+      <div id="resumo" hidden>
+        <h3>Resumo</h3>
+        <div class="cartoes-numero" id="numeros"></div>
+        <p class="frase-resultado" id="resumo-frase"></p>
+        <p class="ajuda" id="resumo-rodape"></p>
+      </div>
+
+      <div id="resultados" hidden>
+        <div class="linha-titulo">
+          <h3>Resultados</h3>
+          <div class="filtros">
+            <select id="filtro-status">
+              <option value="">Todos os status</option>
+              <option value="conciliado">Conciliado</option>
+              <option value="divergente">Divergente</option>
+              <option value="pendente">Pendente</option>
+            </select>
+            <select id="filtro-regra">
+              <option value="">Todas as regras</option>
+              <option value="exata">exata</option>
+              <option value="janela_data">janela_data</option>
+              <option value="tolerancia_valor">tolerancia_valor</option>
+              <option value="nenhuma">nenhuma</option>
+            </select>
+          </div>
+        </div>
+        <table id="tabela-matches">
+          <thead>
+            <tr>
+              <th>Status</th>
+              <th>Venda</th>
+              <th>Crédito</th>
+              <th>Regra</th>
+              <th>Motivo</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <p class="vazio" id="matches-vazio" hidden>Nada neste filtro.</p>
+      </div>
+    </section>
+  </main>
+
+  <div id="aviso" hidden></div>
+  <script src="/static/app.js"></script>
+</body>
+</html>
