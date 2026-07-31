@@ -1,202 +1,236 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ConciliaFlow</title>
-  <link rel="stylesheet" href="/static/style.css">
-</head>
-<body>
-  <div class="fundo-orb orb-a"></div>
-  <div class="fundo-orb orb-b"></div>
-
-  <header class="hero">
-    <div class="hero-conteudo">
-      <p class="sobretitulo">Prova de competência · reconciliação financeira</p>
-      <div class="hero-linha">
-        <div>
-          <h1>ConciliaFlow</h1>
-          <p class="hero-texto">Conciliação de planilhas de pagamento entre fontes que não conversam, com foco em fechar lote sem conferência manual linha a linha.</p>
-        </div>
-        <div class="hero-metrica">
-          <strong>77,2%</strong>
-          <span>automático no dataset de demonstração</span>
-        </div>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ConciliaFlow — conciliação de pagamentos</title>
+    <!-- SVG inline: evita o 404 de /favicon.ico em todo carregamento sem
+         adicionar um binário ao repo. -->
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23226b47'/%3E%3Ctext x='16' y='22' font-family='system-ui,sans-serif' font-size='15' font-weight='700' fill='%23fff' text-anchor='middle'%3ECF%3C/text%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="/static/style.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand__mark" aria-hidden="true">CF</span>
+        <span class="brand__name">ConciliaFlow</span>
       </div>
-    </div>
-  </header>
+      <span class="topbar__note">Conciliação determinística entre fontes que não conversam</span>
+    </header>
 
-  <main class="layout">
-    <!-- Tela 1: execuções -->
-    <section id="tela-jobs">
-      <section class="painel destaque">
-        <div>
-          <p class="sobretitulo">Fluxo</p>
-          <h2 class="titulo-painel">Upload de vendas e créditos, matching determinístico e export em CSV.</h2>
-        </div>
-        <div class="chips">
-          <span>CSV/XLSX</span>
-          <span>3 regras</span>
-          <span>Resumo por status</span>
-          <span>Export Excel</span>
-        </div>
+    <main class="page">
+      <!-- ==================== TELA 1: EXECUÇÕES ==================== -->
+      <section id="tela-jobs">
+        <article class="panel">
+          <h2 class="panel__tab">Execuções</h2>
+          <div class="panel__body">
+            <div class="panel__head">
+              <p class="panel__meta" style="margin: 0">
+                Cada execução guarda os próprios arquivos, parâmetros e resultado.
+              </p>
+              <button class="button button--primary" id="btn-nova" type="button">
+                Nova conciliação
+              </button>
+            </div>
+
+            <form id="form-job" class="form" hidden>
+              <div class="form__row">
+                <label>
+                  Nome
+                  <input name="name" type="text" required minlength="3" placeholder="Fechamento de junho" />
+                </label>
+                <label>
+                  Descrição
+                  <input name="description" type="text" placeholder="opcional" />
+                </label>
+              </div>
+              <div class="form__row">
+                <label>
+                  Janela de data (dias)
+                  <input name="date_window_days" type="number" value="3" min="0" max="60" />
+                </label>
+                <label>
+                  Tolerância (centavos)
+                  <input name="amount_tolerance_cents" type="number" value="5" min="0" max="10000" />
+                </label>
+              </div>
+              <div class="actions">
+                <button class="button button--primary" type="submit">Criar</button>
+                <button class="button" type="button" id="btn-cancelar">Cancelar</button>
+              </div>
+            </form>
+
+            <div class="table-wrap">
+              <table id="tabela-jobs">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Nome</th>
+                    <th>Status</th>
+                    <th>Criada em</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+            <p class="empty" id="jobs-vazio" hidden>
+              Nenhuma execução ainda. Crie a primeira para subir os dois arquivos.
+            </p>
+          </div>
+        </article>
       </section>
 
-      <div class="linha-titulo">
-        <h2>Execuções</h2>
-        <button id="btn-nova">Nova conciliação</button>
-      </div>
+      <!-- ==================== TELA 2: DETALHE ==================== -->
+      <section id="tela-detalhe" hidden>
+        <button class="back" id="btn-voltar" type="button">← Execuções</button>
 
-      <form id="form-job" class="cartao cartao-form" hidden>
-        <label>Nome
-          <input name="name" required minlength="3" placeholder="Fechamento de junho">
-        </label>
-        <label>Descrição
-          <input name="description" placeholder="opcional">
-        </label>
-        <div class="par">
-          <label>Janela de data (dias)
-            <input name="date_window_days" type="number" value="3" min="0" max="60">
-          </label>
-          <label>Tolerância (centavos)
-            <input name="amount_tolerance_cents" type="number" value="5" min="0" max="10000">
-          </label>
-        </div>
-        <div class="acoes">
-          <button type="submit">Criar</button>
-          <button type="button" class="secundario" id="btn-cancelar">Cancelar</button>
-        </div>
-      </form>
-
-      <section class="painel">
-        <table id="tabela-jobs">
-          <thead>
-            <tr><th>#</th><th>Nome</th><th>Status</th><th>Criada em</th><th></th></tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-        <p class="vazio" id="jobs-vazio" hidden>Nenhuma execução ainda. Crie a primeira para subir os dois arquivos de demonstração.</p>
-      </section>
-    </section>
-
-    <!-- Tela 2: detalhe -->
-    <section id="tela-detalhe" hidden>
-      <button class="secundario" id="btn-voltar">← Execuções</button>
-      <div class="linha-titulo">
-        <div>
-          <p class="sobretitulo">Execução</p>
+        <div class="job-title">
           <h2 id="detalhe-nome"></h2>
+          <span id="detalhe-status"></span>
         </div>
-        <span class="etiqueta" id="detalhe-status"></span>
-      </div>
 
-      <div class="cartao">
-        <h3>Fontes</h3>
-        <p class="ajuda">
-          A e B são obrigatórias. CSV ou XLSX — o sistema descobre sozinho quais
-          colunas são quais. Reenviar substitui o conteúdo da fonte.
-        </p>
-        <div id="fontes" class="fontes"></div>
-      </div>
+        <div class="grid grid--sidebar">
+          <article class="panel">
+            <h3 class="panel__tab">Fontes</h3>
+            <div class="panel__body">
+              <p class="panel__meta">
+                A e B são obrigatórias. CSV ou XLSX — o sistema descobre sozinho quais colunas
+                são quais. Reenviar substitui o conteúdo da fonte.
+              </p>
+              <div id="fontes" class="sources"></div>
+            </div>
+          </article>
 
-      <div class="cartao">
-        <h3>Parâmetros</h3>
-        <form id="form-parametros" class="par">
-          <label>Janela de data (dias)
-            <input name="date_window_days" type="number" min="0" max="60">
-          </label>
-          <label>Tolerância (centavos)
-            <input name="amount_tolerance_cents" type="number" min="0" max="10000">
-          </label>
-          <button type="submit" class="secundario">Salvar</button>
-        </form>
-        <p class="ajuda">
-          Mudar aqui e conciliar de novo é uso normal: o resultado é recalculado
-          do zero.
-        </p>
-      </div>
+          <article class="panel">
+            <h3 class="panel__tab">Parâmetros</h3>
+            <div class="panel__body">
+              <form id="form-parametros" class="form">
+                <label>
+                  Janela de data (dias)
+                  <input name="date_window_days" type="number" min="0" max="60" />
+                </label>
+                <label>
+                  Tolerância (centavos)
+                  <input name="amount_tolerance_cents" type="number" min="0" max="10000" />
+                </label>
+                <button class="button" type="submit">Salvar</button>
+              </form>
+              <p class="hint">
+                Mudar aqui e conciliar de novo é uso normal: o resultado é recalculado do zero.
+              </p>
+              <div class="actions" style="margin-top: 14px">
+                <button class="button button--primary" id="btn-conciliar" type="button">
+                  Conciliar
+                </button>
+                <a id="link-export" class="button" hidden>Exportar CSV</a>
+              </div>
+            </div>
+          </article>
+        </div>
 
-      <div class="acoes">
-        <button id="btn-conciliar">Conciliar</button>
-        <a id="link-export" class="botao secundario" hidden>Exportar CSV</a>
-      </div>
+        <!-- resumo -->
+        <section id="resumo" hidden>
+          <div class="kpi-row" id="numeros"></div>
+        </section>
 
-      <div id="resumo" hidden>
-        <h3>Resumo</h3>
-        <div class="cartoes-numero" id="numeros"></div>
-        <p class="frase-resultado" id="resumo-frase"></p>
-        <p class="ajuda" id="resumo-rodape"></p>
-      </div>
+        <div class="grid grid--sidebar" id="bloco-analise" hidden>
+          <!-- fila de exceções -->
+          <article class="panel">
+            <h3 class="panel__tab">Fila de exceções</h3>
+            <div class="panel__body">
+              <div class="panel__head">
+                <p class="panel__meta" style="margin: 0" id="matches-contagem"></p>
+                <div class="actions">
+                  <label class="sr-only" for="filtro-status">Status</label>
+                  <select id="filtro-status">
+                    <option value="excecoes">Exceções (divergente + pendente)</option>
+                    <option value="">Todos os status</option>
+                    <option value="conciliado">Conciliado</option>
+                    <option value="divergente">Divergente</option>
+                    <option value="pendente">Pendente</option>
+                  </select>
+                  <label class="sr-only" for="filtro-regra">Regra</label>
+                  <select id="filtro-regra">
+                    <option value="">Todas as regras</option>
+                    <option value="exata">exata</option>
+                    <option value="janela_data">janela_data</option>
+                    <option value="tolerancia_valor">tolerancia_valor</option>
+                    <option value="nenhuma">nenhuma</option>
+                  </select>
+                </div>
+              </div>
 
-      <div id="resultados" hidden>
-        <div class="linha-titulo">
-          <h3>Resultados</h3>
-          <div class="filtros">
-            <select id="filtro-status">
-              <option value="">Todos os status</option>
-              <option value="conciliado">Conciliado</option>
-              <option value="divergente">Divergente</option>
-              <option value="pendente">Pendente</option>
-            </select>
-            <select id="filtro-regra">
-              <option value="">Todas as regras</option>
-              <option value="exata">exata</option>
-              <option value="janela_data">janela_data</option>
-              <option value="tolerancia_valor">tolerancia_valor</option>
-              <option value="nenhuma">nenhuma</option>
-            </select>
+              <div class="table-wrap">
+                <table id="tabela-matches">
+                  <thead>
+                    <tr>
+                      <th>Status</th>
+                      <th>Fonte A — venda</th>
+                      <th>Fonte B — crédito</th>
+                      <th>Regra</th>
+                      <th>Motivo</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+              <p class="empty" id="matches-vazio" hidden>Nada neste filtro.</p>
+            </div>
+          </article>
+
+          <!-- contagem por regra -->
+          <article class="panel">
+            <h3 class="panel__tab">Quem fechou por qual regra</h3>
+            <div class="panel__body">
+              <p class="panel__meta">
+                No lugar de um score de confiança inventado, o par guarda qual regra o fechou.
+              </p>
+              <div id="grafico-regras"></div>
+              <p class="hint" id="resumo-rodape"></p>
+            </div>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <!-- ==================== COMPARAÇÃO LADO A LADO ==================== -->
+    <div id="inspecao-overlay" class="overlay" hidden></div>
+    <aside id="painel-inspecao" class="inspect" hidden aria-labelledby="inspecao-titulo">
+      <div class="inspect__head">
+        <div>
+          <p class="inspect__title" id="inspecao-titulo">Comparação do par</p>
+          <div class="inspect__tags">
+            <span id="inspecao-status"></span>
+            <span id="inspecao-regra" class="rule"></span>
           </div>
         </div>
-        <table id="tabela-matches">
-          <thead>
-            <tr>
-              <th>Status</th>
-              <th>Venda</th>
-              <th>Crédito</th>
-              <th>Regra</th>
-              <th>Motivo</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-        <p class="vazio" id="matches-vazio" hidden>Nada neste filtro.</p>
+        <button class="button button--small" id="btn-fechar-inspecao" type="button">Fechar</button>
       </div>
-    </section>
-  </main>
 
-  <div id="inspecao-overlay" class="inspecao-overlay" hidden></div>
-  <aside id="painel-inspecao" class="painel-inspecao" hidden aria-labelledby="inspecao-titulo">
-    <div class="painel-inspecao-topo">
-      <div>
-        <p class="sobretitulo">Revisão visual</p>
-        <h2 id="inspecao-titulo">Detalhe da divergência</h2>
+      <p class="inspect__reason" id="inspecao-motivo"></p>
+
+      <div class="inspect__metrics" id="inspecao-metricas"></div>
+
+      <div class="compare">
+        <section class="side">
+          <h4 class="side__title">Fonte A — venda</h4>
+          <div id="inspecao-venda"></div>
+        </section>
+        <section class="side">
+          <h4 class="side__title">Fonte B — crédito</h4>
+          <div id="inspecao-credito"></div>
+        </section>
       </div>
-      <button id="btn-fechar-inspecao" class="secundario" type="button">Fechar</button>
-    </div>
+    </aside>
 
-    <div class="inspecao-resumo">
-      <span class="etiqueta" id="inspecao-status"></span>
-      <span class="inspecao-regra" id="inspecao-regra"></span>
-    </div>
+    <div class="tooltip" id="tooltip" role="tooltip" aria-hidden="true"></div>
+    <div id="aviso" class="toast" hidden></div>
 
-    <p class="inspecao-motivo" id="inspecao-motivo"></p>
-
-    <div class="inspecao-metricas" id="inspecao-metricas"></div>
-
-    <div class="inspecao-grade">
-      <section class="bloco-inspecao">
-        <h3>Venda</h3>
-        <div id="inspecao-venda"></div>
-      </section>
-      <section class="bloco-inspecao">
-        <h3>Crédito</h3>
-        <div id="inspecao-credito"></div>
-      </section>
-    </div>
-  </aside>
-
-  <div id="aviso" hidden></div>
-  <script src="/static/app.js"></script>
-</body>
+    <script src="/static/app.js"></script>
+  </body>
 </html>
