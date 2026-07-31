@@ -1,0 +1,55 @@
+name: Keep-alive
+
+# O plano gratuito do Render adormece o serviço após 15 minutos ocioso. Ao
+# acordar, a borda devolve `404` com `x-render-routing: no-server` até a
+# instância registrar — medido em 1 falha a cada 25 requisições. Para link de
+# portfólio isso é pior que lentidão: o visitante vê página de erro.
+#
+# ORÇAMENTO. O Render dá 750 horas de instância por mês por workspace, não por
+# serviço, e serviço adormecido não consome. Com três serviços, manter os três
+# acordados 24/7 daria ~2.190h e estouraria. A janela comercial abaixo dá ~198h
+# por serviço, ~594h no total, com folga.
+#
+# PRECISÃO. O cron do GitHub Actions não é pontual: sob carga, atrasa dezenas de
+# minutos. Por isso o intervalo é de 5 minutos e não de 15 — para que alguma
+# execução caia dentro da janela de spin-down mesmo com atraso. Em repositório
+# público os minutos de Actions são ilimitados, então a frequência não custa.
+
+on:
+  schedule:
+    # A cada 5 min, 12h–20h UTC (9h–17h em America/Sao_Paulo), dias úteis.
+    - cron: "*/5 12-20 * * 1-5"
+  workflow_dispatch:
+
+# Uma execução por vez: com atraso do agendador, duas podem se sobrepor.
+concurrency:
+  group: keep-alive
+  cancel-in-progress: true
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Acorda o serviço
+        run: |
+          url="https://conciliaflow.onrender.com/health"
+
+          # Até 5 tentativas: a primeira costuma pegar a instância ainda
+          # subindo, e é justamente essa que devolve o 404 de no-server.
+          for tentativa in 1 2 3 4 5; do
+            codigo=$(curl -s -o /dev/null -w '%{http_code}' --max-time 60 "$url" || echo "000")
+            echo "tentativa $tentativa: HTTP $codigo"
+
+            if [ "$codigo" = "200" ]; then
+              echo "serviço no ar"
+              exit 0
+            fi
+
+            sleep 20
+          done
+
+          echo "::warning::serviço não respondeu 200 após 5 tentativas (último: $codigo)"
+          # Não falha o job: instabilidade do plano gratuito não é regressão do
+          # código, e um workflow vermelho recorrente vira ruído que se ignora.
+          exit 0
