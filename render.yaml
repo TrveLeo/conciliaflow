@@ -1,0 +1,22 @@
+# Blueprint do Render — https://render.com/docs/blueprint-spec
+#
+# O banco NÃO é declarado aqui de propósito. O Postgres gratuito do Render
+# expira em 30 dias e leva a demonstração junto; o Neon tem tier gratuito sem
+# prazo. Então `DATABASE_URL` entra como segredo apontando para o Neon.
+#
+# Use o endpoint *pooled* do Neon (o host com `-pooler`).
+#
+# Sem migrations: `app/main.py` chama `Base.metadata.create_all` na inicialização.
+
+services:
+  - type: web
+    name: conciliaflow
+    runtime: docker
+    plan: free
+    region: oregon
+    healthCheckPath: /health
+    autoDeployTrigger: commit
+    envVars:
+      # Definir no painel. Não versionar: é credencial de banco.
+      - key: DATABASE_URL
+        sync: false
