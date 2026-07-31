@@ -1,0 +1,87 @@
+name: Deploy no Hugging Face Spaces
+
+# Espelha a branch `main` num Space com SDK Docker.
+#
+# POR QUE AQUI E NAO NO RENDER
+# O plano gratuito do Render adormece o servico apos 15 minutos ociosos e, ao
+# acordar, a borda devolve 404 com `x-render-routing: no-server` — medido em
+# 1 falha a cada 25 requisicoes. O Space so hiberna apos 48 horas sem visita,
+# o que na pratica elimina o problema para um link de portfolio.
+#
+# O Render tambem limita 750 horas de instancia por mes por workspace, nao por
+# servico. Tirar este projeto de la libera a cota para os outros dois.
+#
+# O QUE E PRECISO CONFIGURAR
+#   secret HF_TOKEN  — token de escrita, em huggingface.co/settings/tokens
+#   variable HF_SPACE — "usuario/nome-do-space"
+#   secret DATABASE_URL fica no painel do Space, nao aqui.
+#
+# O Space roda o container como uid 1000. Verificado: a imagem sobe e serve
+# normalmente sem root.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-hf
+  cancel-in-progress: true
+
+jobs:
+  push:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Confere se o destino esta configurado
+        run: |
+          if [ -z "${{ vars.HF_SPACE }}" ] || [ -z "${{ secrets.HF_TOKEN }}" ]; then
+            echo "::warning::HF_SPACE ou HF_TOKEN ausentes — deploy pulado."
+            echo "pular=true" >> "$GITHUB_ENV"
+          fi
+
+      - uses: actions/checkout@v4
+        if: env.pular != 'true'
+        with:
+          # O Space rejeita push raso; precisa do historico completo.
+          fetch-depth: 0
+
+      - name: Monta o README que o Space exige
+        if: env.pular != 'true'
+        run: |
+          # O Space le a configuracao do frontmatter YAML do README.md. O README
+          # do projeto no GitHub fica intacto: o cabecalho e adicionado so no
+          # commit enviado para o Space.
+          {
+            echo "---"
+            echo "title: ConciliaFlow"
+            echo "emoji: 🧾"
+            echo "colorFrom: green"
+            echo "colorTo: gray"
+            echo "sdk: docker"
+            # Casa com o fallback do Dockerfile: uvicorn --port ${PORT:-8000}
+            echo "app_port: 8000"
+            echo "pinned: false"
+            echo "short_description: Conciliacao deterministica de planilhas de pagamento"
+            echo "---"
+            echo
+            cat README.md
+          } > README.hf.md
+          mv README.hf.md README.md
+
+      - name: Envia para o Space
+        if: env.pular != 'true'
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_SPACE: ${{ vars.HF_SPACE }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add README.md
+          git commit -m "chore: cabecalho do Space (gerado no deploy)"
+
+          # Force push: o Space e espelho da main, nao tem historico proprio a
+          # preservar.
+          git push --force "https://oauth:${HF_TOKEN}@huggingface.co/spaces/${HF_SPACE}" HEAD:main
+
+          echo "enviado para https://huggingface.co/spaces/${HF_SPACE}"
